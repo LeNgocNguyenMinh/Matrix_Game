@@ -1,13 +1,9 @@
-using System.Collections.Generic;
-using System.Collections;
-using DG.Tweening;
+
 using UnityEngine;
-using Unity.Collections;
-using UnityEngine.UI;
-using UnityEngine.Rendering;
 
 public class BlockInstantiate : MonoBehaviour
 {
+    public float sandFriction;
     public Texture2D tex;
     public int width;
     public int heigh;
@@ -15,8 +11,9 @@ public class BlockInstantiate : MonoBehaviour
     public SpriteRenderer spr;
     public int eraseSize;
     public bool canSimulator;
-    public float fallDelay;
-    public float fallCounter;
+    [SerializeField]private float fallDelay;
+    private float fallCounter;
+    
     private void Start()
     {
         canSimulator = true;
@@ -47,6 +44,9 @@ public class BlockInstantiate : MonoBehaviour
         HandleMouseHover();
         if (Input.GetKeyDown(KeyCode.T)) CreateTetrixBlock("T");
         if (Input.GetKeyDown(KeyCode.I)) CreateTetrixBlock("I");   
+        if (Input.GetKeyDown(KeyCode.Z)) CreateTetrixBlock("Z");
+        if (Input.GetKeyDown(KeyCode.L)) CreateTetrixBlock("L");
+        if (Input.GetKeyDown(KeyCode.O)) CreateTetrixBlock("O");
         fallCounter += Time.deltaTime;
         while (fallCounter >= fallDelay)
         {
@@ -100,14 +100,14 @@ public class BlockInstantiate : MonoBehaviour
         {  
             for(int x = 0; x < width; x++)
             {
-                if(tex.GetPixel(x, y) == Color.black)
+                if(tex.GetPixel(x, y) != Color.white)
                 {
                     if(tex.GetPixel(x, y - 1) == Color.white)
                     {
                         tex.SetPixel(x, y, Color.white);
                         tex.SetPixel(x, y - 1, Color.black);
                     }
-                    else 
+                    else if (Random.value > sandFriction)
                     {
                         int direct = Random.Range(0,2) == 0 ? -1 : 1;
                         if((x + direct >= 0)  && (x + direct < width) && (tex.GetPixel(x + direct, y - 1) == Color.white))                        
@@ -159,7 +159,7 @@ public class BlockInstantiate : MonoBehaviour
                     {1, 1, 1, 1}
                 };
                 break;
-            case "z":
+            case "Z":
                 mask = new int[,]{
                     {0, 1, 1},
                     {1, 1, 0}

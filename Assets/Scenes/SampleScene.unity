@@ -149,6 +149,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35f52d2015244164bb7ab25ab95d773b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlockInstantiate
+  sandFriction: 0.1
   tex: {fileID: 0}
   width: 60
   heigh: 140
