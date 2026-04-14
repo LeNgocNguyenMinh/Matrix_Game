@@ -1,31 +1,65 @@
-
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class BlockInstantiate : MonoBehaviour
 {
-    public float sandFriction;
-    public Texture2D tex;
-    public int width;
-    public int heigh;
+    [Header("---General Setting---")]
+    [SerializeField]private SpriteRenderer spr;
+    private Texture2D tex;
+    [SerializeField]private int width;
+    [SerializeField]private int heigh;
     public int[,] grid;
-    public SpriteRenderer spr;
-    public int eraseSize;
+    [Header("---List Of Block---")]
+    private Dictionary <string, int[,]> maskList;
+    private string[] listShape;
+    [Header("---Sand Element---")]
+    [SerializeField]private float sandFriction;
+    [SerializeField]private Color[] colorList;
+    [Header("---Simulator Setting")]
     public bool canSimulator;
     [SerializeField]private float fallDelay;
+    [SerializeField]private float blockSpawnDelay;
+    private float spawnCounter;
     private float fallCounter;
-    
+    private bool canSpawn = true;
+    private void Awake()
+    {
+        //Shape name
+        listShape = new string[]{"T", "I", "O", "-", "L", "Z"};
+        //Create shape 
+        maskList = new Dictionary<string, int[,]>();
+        maskList["T"] = new int[,] {
+            {1, 1, 1}, 
+            {0, 1, 0}};
+        maskList["I"] = new int[,] { 
+            {1}, {1}, 
+            {1}, {1}}; // Dạng thanh đứng
+        maskList["O"] = new int[,] { 
+            {1, 1}, 
+            {1, 1}};
+        maskList["-"] = new int[,] { 
+            {1, 1, 1, 1}}; // Dạng thanh ngang
+        maskList["L"] = new int[,] { 
+            {1, 0}, 
+            {1, 0}, 
+            {1, 1}};
+        maskList["Z"] = new int[,] { 
+            {0, 1, 1}, 
+            {1, 1, 0}};
+        grid = new int[width, heigh];
+        tex = new Texture2D(width, heigh);
+    }
     private void Start()
     {
         canSimulator = true;
         GridSetup();
         fallCounter = 0f;
-        /* InvokeRepeating("SandFallSimulator", 0f, fallDelay); */
+        spawnCounter = 0f;
     }
+    //Make grid texture 2d
     private void GridSetup()
     {
-        grid = new int[width, heigh];
-
-        tex = new Texture2D(width, heigh);
         tex.filterMode = FilterMode.Point;
         tex.wrapMode = TextureWrapMode.Clamp;
 
@@ -41,23 +75,25 @@ public class BlockInstantiate : MonoBehaviour
     }
     private void Update()
     {
-        HandleMouseHover();
-        if (Input.GetKeyDown(KeyCode.T)) CreateTetrixBlock("T");
-        if (Input.GetKeyDown(KeyCode.I)) CreateTetrixBlock("I");   
-        if (Input.GetKeyDown(KeyCode.Z)) CreateTetrixBlock("Z");
-        if (Input.GetKeyDown(KeyCode.L)) CreateTetrixBlock("L");
-        if (Input.GetKeyDown(KeyCode.O)) CreateTetrixBlock("O");
+        /* HandleMouseHover(); */
+        if(canSpawn)
+        {
+            if(spawnCounter >= blockSpawnDelay)
+            {
+                spawnCounter = 0f;
+                int index = Random.Range(0, listShape.Length);
+                CreateTetrixBlock(listShape[index]);
+            }
+            else{
+                spawnCounter += Time.deltaTime;
+            } 
+        }
+        
         fallCounter += Time.deltaTime;
         while (fallCounter >= fallDelay)
         {
             SandFallSimulator();
-            
-            // Trừ đi một khoảng delay, giữ lại phần dư (remainder) 
-            // để cộng dồn cho frame kế tiếp. Đây là bí quyết của sự mượt mà.
             fallCounter -= fallDelay;
-
-            // Giới hạn an toàn: Tránh việc vòng lặp chạy quá nhiều lần gây treo máy (Infinite loop)
-            // Nếu máy quá lag, chúng ta chấp nhận bỏ qua một số bước vật lý.
             if (Time.deltaTime > 0.1f) {
                 fallCounter = 0;
                 break;
@@ -100,12 +136,13 @@ public class BlockInstantiate : MonoBehaviour
         {  
             for(int x = 0; x < width; x++)
             {
+                Color currentColor = tex.GetPixel(x, y);
                 if(tex.GetPixel(x, y) != Color.white)
                 {
                     if(tex.GetPixel(x, y - 1) == Color.white)
                     {
                         tex.SetPixel(x, y, Color.white);
-                        tex.SetPixel(x, y - 1, Color.black);
+                        tex.SetPixel(x, y - 1, currentColor);
                     }
                     else if (Random.value > sandFriction)
                     {
@@ -113,12 +150,12 @@ public class BlockInstantiate : MonoBehaviour
                         if((x + direct >= 0)  && (x + direct < width) && (tex.GetPixel(x + direct, y - 1) == Color.white))                        
                         {
                             tex.SetPixel(x, y, Color.white);
-                            tex.SetPixel(x + direct, y - 1, Color.black);
+                            tex.SetPixel(x + direct, y - 1, currentColor);
                         }
                         else if((x - direct >= 0)  && (x - direct < width) && (tex.GetPixel(x - direct, y - 1) == Color.white)) 
                         {
                             tex.SetPixel(x, y, Color.white);
-                            tex.SetPixel(x - direct, y - 1, Color.black);
+                            tex.SetPixel(x - direct, y - 1, currentColor);
                         }
                     }
                 }
@@ -127,57 +164,32 @@ public class BlockInstantiate : MonoBehaviour
     }
     private void CreateTetrixBlock(string shapeType)
     {
-        int [,] mask = null;
-        switch(shapeType)
+        Color color = Color.black;
+        int index = Random.Range(0, 3);
+        switch (index)
         {
-            case "T":
-                mask = new int[,] {
-                    {1, 1, 1},
-                    {0, 1, 0}
-                };
+            case 0:
+                color = Color.blue;
                 break;
-            case "I":
-                mask = new int[,]{
-                    {0, 1, 0},
-                    {0, 1, 0}
-                }; 
+            case 1:
+                color = Color.yellow;
                 break;
-            case "O":
-                mask = new int[,]{
-                    {1, 1},
-                    {1, 1}
-                };
-                break;
-            case "-":
-                mask = new int[,]{
-                    {1, 1, 1, 1}
-                };
-                break;
-            case "L":
-                mask = new int[,]{
-                    {1, 0, 0, 0},
-                    {1, 1, 1, 1}
-                };
-                break;
-            case "Z":
-                mask = new int[,]{
-                    {0, 1, 1},
-                    {1, 1, 0}
-                };
+            case 2:
+                color = Color.red;
                 break;
         }
         int cellSize = 5; // Mỗi ô vuông nhỏ của Tetris sẽ rộng 5x5 pixel cát
-        int shapeWidth = mask.GetLength(1) * cellSize;
-        int shapeHeight = mask.GetLength(0) * cellSize;
+        int shapeWidth = maskList[shapeType].GetLength(1) * cellSize;
+        int shapeHeight = maskList[shapeType].GetLength(0) * cellSize;
 
         int startX = width/2 - shapeWidth/2;
         int startY = heigh - 1;
 
-        for (int row = 0; row < mask.GetLength(0); row++)
+        for (int row = 0; row < maskList[shapeType].GetLength(0); row++)
         {
-            for (int col = 0; col < mask.GetLength(1); col++)
+            for (int col = 0; col < maskList[shapeType].GetLength(1); col++)
             {
-                if (mask[row, col] == 1)
+                if (maskList[shapeType][row, col] == 1)
                 {
                     for (int dy = 0; dy < cellSize; dy++)
                     {
@@ -188,7 +200,7 @@ public class BlockInstantiate : MonoBehaviour
 
                             if (px >= 0 && px < width && py >= 0 && py < heigh)
                             {
-                                tex.SetPixel(px, py, Color.black);
+                                tex.SetPixel(px, py, color);
                             }
                         }
                     }

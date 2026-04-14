@@ -149,14 +149,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35f52d2015244164bb7ab25ab95d773b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlockInstantiate
-  sandFriction: 0.1
-  tex: {fileID: 0}
+  spr: {fileID: 332151069}
   width: 60
   heigh: 140
-  spr: {fileID: 332151069}
-  eraseSize: 0
+  sandFriction: 0.3
+  colorList:
+  - {r: 1, g: 0, b: 0, a: 0}
+  - {r: 0.011440754, g: 0, b: 1, a: 0}
+  - {r: 1, g: 0.86824584, b: 0, a: 0}
   canSimulator: 0
   fallDelay: 0.025
+  blockSpawnDelay: 2
 --- !u!4 &332151068
 Transform:
   m_ObjectHideFlags: 0
